@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAFIR DZ — Maternal AI Assistant · Preeclampsia Decision Support</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c-primary: #1a3a5c;
+  --c-primary-light: #2c5f8a;
+  --c-primary-pale: #e8f2fc;
+  --c-accent: #0891b2;
+  --c-accent-light: #e0f2fe;
+  --c-danger: #b91c1c;
+  --c-danger-light: #fee2e2;
+  --c-danger-pale: #fff5f5;
+  --c-warning: #b45309;
+  --c-warning-light: #fef3c7;
+  --c-success: #065f46;
+  --c-success-light: #d1fae5;
+  --c-neutral: #374151;
+  --c-muted: #6b7280;
+  --c-border: #e5e7eb;
+  --c-bg: #f4f6f9;
+  --c-white: #ffffff;
+  --c-surface: #ffffff;
+  --c-sidebar: #0f2640;
+  --c-sidebar-text: #94b8d4;
+  --c-sidebar-active: #ffffff;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-display: 'DM Serif Display', serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--font-body); background: var(--c-bg); color: var(--c-neutral); font-size: 14px; }
+#app { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: 240px; background: var(--c-sidebar); display: flex; flex-direction: column; flex-shrink: 0; }
+.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.logo-mark { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #2c7fb8, #0891b2); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.logo-icon svg { width: 20px; height: 20px; fill: none; stroke: white; stroke-width: 1.8; }
+.logo-name { font-family: var(--font-display); font-size: 22px; color: white; letter-spacing: -0.5px; }
+.logo-sub { font-size: 11px; color: var(--c-sidebar-text); letter-spacing: 0.08em; text-transform: uppercase; }
+.sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+.nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(148,184,212,0.5); padding: 16px 8px 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; color: var(--c-sidebar-text); font-size: 13.5px; font-weight: 400; transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+.nav-item:hover { background: rgba(255,255,255,0.06); color: #c5d9ea; }
+.nav-item.active { background: rgba(255,255,255,0.12); color: var(--c-sidebar-active); font-weight: 500; }
+.nav-item .nav-icon { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-badge { margin-left: auto; background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+.sidebar-user { padding: 16px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 34px; height: 34px; background: #2c5f8a; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #a8d4f0; font-weight: 600; font-size: 13px; flex-shrink: 0; }
+.user-info { flex: 1; min-width: 0; }
+.user-name { color: white; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { color: var(--c-sidebar-text); font-size: 11px; }
+.screen { display: none; flex-direction: column; min-height: 100%; }
+.screen.active { display: flex; }
+.topbar { background: var(--c-white); border-bottom: 1px solid var(--c-border); padding: 14px 28px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.topbar-title { font-size: 16px; font-weight: 600; color: var(--c-primary); flex: 1; }
+.topbar-sub { font-size: 13px; color: var(--c-muted); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: var(--c-primary); color: white; }
+.btn-primary:hover { background: var(--c-primary-light); }
+.btn-secondary { background: var(--c-white); color: var(--c-primary); border: 1px solid var(--c-border); }
+.btn-secondary:hover { background: var(--c-bg); }
+.btn-danger { background: var(--c-danger); color: white; }
+.btn-accent { background: var(--c-accent); color: white; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-icon { width: 14px; height: 14px; }
+.content { flex: 1; padding: 28px; overflow-y: auto; }
+.card { background: var(--c-white); border-radius: var(--radius); border: 1px solid var(--c-border); box-shadow: var(--shadow); }
+.card-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--c-border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 14px; font-weight: 600; color: var(--c-primary); }
+.card-body { padding: 20px 22px; }
+.grid { display: grid; gap: 18px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.stat-card { background: var(--c-white); border: 1px solid var(--c-border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+.stat-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--c-muted); margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: 600; color: var(--c-primary); line-height: 1; }
+.stat-delta { font-size: 12px; margin-top: 6px; }
+.stat-delta.up { color: var(--c-danger); }
+.stat-delta.down { color: var(--c-success); }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11.5px; font-weight: 500; }
+.badge-danger { background: var(--c-danger-light); color: var(--c-danger); }
+.badge-warning { background: var(--c-warning-light); color: var(--c-warning); }
+.badge-success { background: var(--c-success-light); color: var(--c-success); }
+.badge-info { background: var(--c-accent-light); color: var(--c-accent); }
+.badge-neutral { background: #f3f4f6; color: var(--c-muted); }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12.5px; font-weight: 500; color: var(--c-neutral); margin-bottom: 6px; }
+.form-label .req { color: var(--c-danger); }
+.form-input { width: 100%; padding: 9px 13px; border: 1px solid var(--c-border); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 13.5px; color: var(--c-neutral); background: var(--c-white); outline: none; transition: border-color 0.15s; }
+.form-input:focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(8,145,178,0.1); }
+.form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.form-row { display: grid; gap: 14px; }
+.form-row-2 { grid-template-columns: 1fr 1fr; }
+.form-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+.checkbox-group { display: flex; flex-direction: column; gap: 8px; }
+.checkbox-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13.5px; }
+.checkbox-item input { width: 15px; height: 15px; accent-color: var(--c-accent); cursor: pointer; }
+.progress-bar { height: 8px; background: var(--c-border); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+.shap-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12.5px; }
+.shap-label { width: 170px; flex-shrink: 0; text-align: right; color: var(--c-neutral); }
+.shap-bar-wrap { flex: 1; display: flex; align-items: center; gap: 6px; }
+.shap-bar { height: 18px; border-radius: 3px; min-width: 4px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+.shap-pos { background: #dc2626; }
+.shap-neg { background: #2563eb; }
+.shap-value { font-size: 11.5px; color: var(--c-muted); font-family: var(--font-mono); width: 50px; }
+.alert { padding: 14px 18px; border-radius: var(--radius-sm); border-left: 4px solid; margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start; }
+.alert-danger { background: var(--c-danger-pale); border-color: var(--c-danger); }
+.alert-warning { background: #fffbeb; border-color: #f59e0b; }
+.alert-info { background: var(--c-accent-light); border-color: var(--c-accent); }
+.alert-success { background: var(--c-success-light); border-color: #10b981; }
+.alert-icon { font-size: 16px; line-height: 1.2; flex-shrink: 0; }
+.alert-title { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+.alert-body { font-size: 12.5px; line-height: 1.6; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--c-muted); font-weight: 500; padding: 10px 14px; border-bottom: 1px solid var(--c-border); text-align: left; background: #fafafa; }
+td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; font-size: 13.5px; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+.td-patient { display: flex; align-items: center; gap: 10px; }
+.patient-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.tabs { display: flex; border-bottom: 1px solid var(--c-border); margin-bottom: 24px; }
+.tab { padding: 10px 18px; font-size: 13px; font-weight: 500; color: var(--c-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+.tab:hover { color: var(--c-primary); }
+.tab.active { color: var(--c-primary); border-bottom-color: var(--c-accent); }
+#screen-login { background: linear-gradient(145deg, #0f2640 0%, #1a3a5c 50%, #0a1f38 100%); justify-content: center; align-items: center; }
+.login-card { background: white; border-radius: 20px; padding: 44px 44px 36px; width: 420px; box-shadow: 0 24px 80px rgba(0,0,0,0.3); }
+.login-logo { text-align: center; margin-bottom: 32px; }
+.login-logo-icon { width: 56px; height: 56px; background: linear-gradient(135deg, #1a3a5c, #0891b2); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+.login-logo-icon svg { width: 28px; height: 28px; fill: none; stroke: white; stroke-width: 1.6; }
+.login-title { font-family: var(--font-display); font-size: 28px; color: var(--c-primary); margin-bottom: 4px; }
+.login-subtitle { font-size: 13px; color: var(--c-muted); }
+.login-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--c-muted); font-size: 12px; }
+.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--c-border); }
+.login-security { background: var(--c-bg); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 8px; margin-top: 20px; font-size: 12px; color: var(--c-muted); }
+.section-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--c-muted); margin-bottom: 14px; }
+.rec-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--c-border); }
+.rec-item:last-child { border-bottom: none; }
+.rec-priority { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.rec-content-title { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+.rec-content-body { font-size: 12.5px; color: var(--c-muted); line-height: 1.6; }
+.rec-meta { font-size: 11.5px; color: var(--c-muted); margin-top: 5px; }
+.patient-header { background: var(--c-white); border-bottom: 1px solid var(--c-border); padding: 20px 28px; display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+.patient-avatar-lg { width: 56px; height: 56px; border-radius: 50%; background: var(--c-primary-pale); border: 2px solid var(--c-accent); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--c-primary); flex-shrink: 0; }
+.patient-info { flex: 1; }
+.patient-name { font-size: 20px; font-weight: 700; color: var(--c-primary); font-family: var(--font-display); }
+.patient-meta { font-size: 13px; color: var(--c-muted); margin-top: 2px; }
+.patient-tags { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.model-card { background: #f8fafc; border: 1px solid var(--c-border); border-radius: var(--radius-sm); padding: 14px 16px; }
+.model-name { font-size: 12px; font-weight: 600; color: var(--c-primary); margin-bottom: 8px; }
+.model-score { font-size: 22px; font-weight: 700; line-height: 1; }
+.timeline { position: relative; }
+.timeline::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 1px; background: var(--c-border); }
+.tl-item { display: flex; gap: 16px; padding-bottom: 20px; position: relative; }
+.tl-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; font-weight: 700; z-index: 1; }
+.tl-content { flex: 1; padding-top: 4px; }
+.tl-title { font-size: 13.5px; font-weight: 600; color: var(--c-neutral); }
+.tl-time { font-size: 11.5px; color: var(--c-muted); margin-top: 2px; }
+.tl-body { font-size: 12.5px; color: var(--c-muted); margin-top: 4px; line-height: 1.5; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.35s ease forwards; }
+@media (max-width: 900px) { .sidebar { display: none; } .grid-4 { grid-template-columns: repeat(2, 1fr); } .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── GAUGE ── */
+.gauge-wrap { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
+.gauge-svg { display: block; }
+.gauge-score-text { font-size: 52px; font-weight: 700; font-family: var(--font-display); transition: all 0.5s; }
+.gauge-label-text { font-size: 11px; fill: #9ca3af; }
+.risk-level-badge { display: inline-block; padding: 6px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-top: 12px; transition: all 0.4s; }
+.gauge-arc { transition: stroke-dasharray 0.7s cubic-bezier(.4,0,.2,1); }
+.gauge-needle { transition: transform 0.7s cubic-bezier(.4,0,.2,1); transform-origin: 100px 110px; }
+
+/* ── Live indicator ── */
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse-dot 1.5s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 0 20M12 2a10 10 0 0 0 0 20M12 2v20M2 12h20"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+      <span class="logo-name">SAFIR DZ</span>
+    </div>
+    <div class="logo-sub">Maternal AI Assistant</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Navigation</div>
+    <button class="nav-item" onclick="showScreen('login')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="3"/><path d="M8 6v4M6 8h4"/></svg>Login Screen
+    </button>
+    <button class="nav-item" onclick="showScreen('dashboard')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Dashboard
+    </button>
+    <button class="nav-item" onclick="showScreen('registration')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3 2.7-5 6-5s6 2 6 5"/><path d="M11 4h3M12.5 2.5v3"/></svg>New Patient
+    </button>
+    <button class="nav-item" onclick="showScreen('monitoring')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h2l2-5 2 10 2-7 2 4 1-2h1"/></svg>Monitoring
+    </button>
+    <button class="nav-item" onclick="showScreen('prediction')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L10 7H14L11 10L12 14L8 12L4 14L5 10L2 7H6L8 2Z"/></svg>AI Prediction
+      <span class="nav-badge" id="nav-alert-badge">!</span>
+    </button>
+    <button class="nav-item" onclick="showScreen('explanation')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 7v5M8 5v.5"/></svg>AI Explanation
+    </button>
+    <button class="nav-item" onclick="showScreen('recommendations')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h10M3 8h7M3 11h5"/></svg>Recommendations
+    </button>
+    <div class="nav-section">Administration</div>
+    <button class="nav-item" onclick="showScreen('population')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13V6l4-4 4 4 4-4v7"/><path d="M2 13h12"/></svg>Population Stats
+    </button>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar">DK</div>
+    <div class="user-info">
+      <div class="user-name">Dr. Karima Djebbar</div>
+      <div class="user-role">Obstetrician · CHU Constantine</div>
+    </div>
+  </div>
+</nav>
+
+<!-- LOGIN -->
+<div class="screen" id="screen-login">
+  <div class="login-card fade-in">
+    <div class="login-logo">
+      <div class="login-logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 0 20M12 2a10 10 0 0 0 0 20M12 2v20M2 12h20"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="login-title">SAFIR DZ</div>
+      <div class="login-subtitle">Système d'aide à la décision médicale — Prééclampsie</div>
+    </div>
+    <div class="form-group"><label class="form-label">Identifiant professionnel</label><input class="form-input" type="text" value="DK-CHU-2847"></div>
+    <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" type="password" value="••••••••"></div>
+    <div class="form-group" style="display:flex;justify-content:space-between;align-items:center">
+      <label class="checkbox-item" style="font-size:13px;color:#6b7280"><input type="checkbox" checked> Rester connecté</label>
+      <span style="font-size:12.5px;color:var(--c-accent);cursor:pointer">Mot de passe oublié ?</span>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;" onclick="showScreen('dashboard')">
+      <svg style="width:15px;height:15px;fill:none;stroke:white;stroke-width:2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+      Se connecter
+    </button>
+    <div class="login-divider">ou</div>
+    <button class="btn btn-secondary" style="width:100%;justify-content:center;padding:10px;">
+      <svg style="width:15px;height:15px;fill:none;stroke:var(--c-primary);stroke-width:2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Authentification par carte CPS
+    </button>
+    <div class="login-security">
+      <svg style="width:14px;height:14px;flex-shrink:0;fill:none;stroke:#9ca3af;stroke-width:2" viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6L12 2z"/></svg>
+      Connexion sécurisée · Données chiffrées AES-256 · Conforme SNDS
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen" id="screen-dashboard">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Tableau de bord — Surveillance obstétricale</div>
+      <div class="topbar-sub">CHU Constantine · Service de Maternité · Dimanche 5 avril 2026</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="showScreen('registration')">
+      <svg class="btn-icon" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nouvelle patiente
+    </button>
+  </div>
+  <div class="content">
+    <div class="grid grid-4" style="margin-bottom:22px">
+      <div class="stat-card"><div class="stat-label">Patientes actives</div><div class="stat-value">47</div><div class="stat-delta up">↑ 3 nouvelles aujourd'hui</div></div>
+      <div class="stat-card"><div class="stat-label">Risque élevé</div><div class="stat-value" style="color:var(--c-danger)" id="dash-high-count">8</div><div class="stat-delta up">↑ 2 depuis hier</div></div>
+      <div class="stat-card"><div class="stat-label">Risque modéré</div><div class="stat-value" style="color:var(--c-warning)">15</div><div class="stat-delta" style="color:var(--c-muted)">Stable</div></div>
+      <div class="stat-card"><div class="stat-label">Score IA — Fatima Benali</div><div class="stat-value" style="color:var(--c-danger)" id="dash-ai-score">91%</div><div class="stat-delta up" id="dash-risk-label">Risque très élevé</div></div>
+    </div>
+    <div class="alert alert-danger" id="dash-alert">
+      <div class="alert-icon">⚠️</div>
+      <div>
+        <div class="alert-title">Alerte critique — 2 patientes nécessitent une attention immédiate</div>
+        <div class="alert-body" id="dash-alert-body">Fatima Benali (G3P2, SA 32) — Score IA 91% — Poussée hypertensive détectée · Yasmine Khelifi (G1P0, SA 28) — Score IA 84% — Protéinurie sévère</div>
+      </div>
+    </div>
+    <div class="grid grid-2" style="gap:20px">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Patientes à risque élevé</div><button class="btn btn-secondary btn-sm">Voir toutes</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Patiente</th><th>SA</th><th>Score IA</th><th>Statut</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr style="cursor:pointer" onclick="showScreen('monitoring')">
+                <td><div class="td-patient"><div class="patient-avatar" style="background:#fee2e2;color:#b91c1c">FB</div><div><div style="font-weight:600;font-size:13px">Fatima Benali</div><div style="color:var(--c-muted);font-size:11.5px">G3P2 · 34 ans</div></div></div></td>
+                <td style="font-weight:600" id="dash-sa">32 SA</td>
+                <td><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;color:var(--c-danger)" id="dash-score-cell">91%</span><div class="progress-bar" style="width:60px"><div class="progress-fill" id="dash-score-bar" style="width:91%;background:var(--c-danger)"></div></div></div></td>
+                <td><span class="badge badge-danger" id="dash-status-badge">Critique</span></td>
+                <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();showScreen('prediction')">Analyser</button></td>
+              </tr>
+              <tr style="cursor:pointer"><td><div class="td-patient"><div class="patient-avatar" style="background:#fee2e2;color:#b91c1c">YK</div><div><div style="font-weight:600;font-size:13px">Yasmine Khelifi</div><div style="color:var(--c-muted);font-size:11.5px">G1P0 · 26 ans</div></div></div></td><td style="font-weight:600">28 SA</td><td><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;color:var(--c-danger)">84%</span><div class="progress-bar" style="width:60px"><div class="progress-fill" style="width:84%;background:var(--c-danger)"></div></div></div></td><td><span class="badge badge-danger">Élevé</span></td><td><button class="btn btn-danger btn-sm" onclick="showScreen('prediction')">Analyser</button></td></tr>
+              <tr><td><div class="td-patient"><div class="patient-avatar" style="background:#fef3c7;color:#b45309">NA</div><div><div style="font-weight:600;font-size:13px">Nadia Amrani</div><div style="color:var(--c-muted);font-size:11.5px">G2P1 · 30 ans</div></div></div></td><td style="font-weight:600">24 SA</td><td><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;color:var(--c-warning)">68%</span><div class="progress-bar" style="width:60px"><div class="progress-fill" style="width:68%;background:var(--c-warning)"></div></div></div></td><td><span class="badge badge-warning">Modéré</span></td><td><button class="btn btn-secondary btn-sm">Surveiller</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Distribution des risques</div></div>
+        <div class="card-body">
+          <svg viewBox="0 0 260 160" style="width:100%;max-height:160px">
+            <rect x="15" y="80" width="30" height="70" fill="#d1fae5" rx="4"/>
+            <rect x="50" y="60" width="30" height="90" fill="#d1fae5" rx="4"/>
+            <rect x="85" y="50" width="30" height="100" fill="#d1fae5" rx="4"/>
+            <rect x="120" y="70" width="30" height="80" fill="#fef3c7" rx="4"/>
+            <rect x="155" y="40" width="30" height="110" fill="#fef3c7" rx="4"/>
+            <rect x="190" y="100" width="30" height="50" fill="#fee2e2" rx="4"/>
+            <rect x="225" y="20" width="30" height="130" fill="#fee2e2" rx="4"/>
+            <text x="30" y="158" text-anchor="middle" font-size="9" fill="#9ca3af">Lun</text>
+            <text x="65" y="158" text-anchor="middle" font-size="9" fill="#9ca3af">Mar</text>
+            <text x="100" y="158" text-anchor="middle" font-size="9" fill="#9ca3af">Mer</text>
+            <text x="135" y="158" text-anchor="middle" font-size="9" fill="#9ca3af">Jeu</text>
+            <text x="170" y="158" text-anchor="middle" font-size="9" fill="#9ca3af">Ven</text>
+            <text x="205" y="158" text-anchor="middle" font-size="9" fill="#9ca3af">Sam</text>
+            <text x="240" y="158" text-anchor="middle" font-size="9" fill="#9ca3af">Dim</text>
+          </svg>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--c-danger)"></div><span style="font-size:12.5px">Risque élevé (≥70%)</span></div><span style="font-weight:700;color:var(--c-danger);font-size:13px">8 patientes</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:var(--c-warning)"></div><span style="font-size:12.5px">Risque modéré (30–70%)</span></div><span style="font-weight:700;color:var(--c-warning);font-size:13px">15 patientes</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:#10b981"></div><span style="font-size:12.5px">Risque faible (&lt;30%)</span></div><span style="font-weight:700;color:var(--c-success);font-size:13px">24 patientes</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTRATION -->
+<div class="screen" id="screen-registration">
+  <div class="topbar">
+    <div><div class="topbar-title">Enregistrement d'une nouvelle patiente</div><div class="topbar-sub">Saisie des données cliniques — modifications reflétées en temps réel dans l'analyse IA</div></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('dashboard')">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="showScreen('monitoring')">Enregistrer et analyser →</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="tabs">
+      <div class="tab active" id="tab-1" onclick="switchTab(1)">1. Identité</div>
+      <div class="tab" id="tab-2" onclick="switchTab(2)">2. Facteurs obstétricaux</div>
+      <div class="tab" id="tab-3" onclick="switchTab(3)">3. Facteurs maternels</div>
+      <div class="tab" id="tab-4" onclick="switchTab(4)">4. Environnement & Social</div>
+    </div>
+
+    <div id="tabcontent-1">
+      <div class="grid grid-2" style="gap:20px">
+        <div class="card"><div class="card-header"><div class="card-title">Informations d'identité</div></div><div class="card-body">
+          <div class="form-row form-row-2">
+            <div class="form-group"><label class="form-label">Nom <span class="req">*</span></label><input class="form-input" id="f-nom" value="Benali" oninput="updatePatientHeader()"></div>
+            <div class="form-group"><label class="form-label">Prénom <span class="req">*</span></label><input class="form-input" id="f-prenom" value="Fatima" oninput="updatePatientHeader()"></div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label class="form-label">Date de naissance <span class="req">*</span></label><input class="form-input" id="f-dob" type="date" value="1992-03-15" oninput="calcAge()"></div>
+            <div class="form-group"><label class="form-label">Âge calculé</label><input class="form-input" id="f-age" value="34 ans" readonly style="background:#f9fafb;color:var(--c-muted)"></div>
+          </div>
+          <div class="form-group"><label class="form-label">N° dossier hospitalier</label><input class="form-input" value="CHU-CON-2024-08472"></div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label class="form-label">Poids (kg) <span class="req">*</span></label><input class="form-input" id="f-poids" type="number" value="78" oninput="calcBMI();computeRisk()"></div>
+            <div class="form-group"><label class="form-label">Taille (cm) <span class="req">*</span></label><input class="form-input" id="f-taille" type="number" value="164" oninput="calcBMI();computeRisk()"></div>
+          </div>
+          <div class="form-group"><label class="form-label">IMC calculé</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input class="form-input" id="f-bmi" value="29.0 kg/m²" readonly style="background:#f9fafb">
+              <span class="badge" id="f-bmi-badge" style="background:var(--c-warning-light);color:var(--c-warning)">Surpoids</span>
+            </div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Aperçu risque en temps réel</div><span style="display:flex;align-items:center;gap:6px;font-size:12px;color:#10b981"><span class="live-dot"></span>Live</span></div>
+          <div class="card-body" style="text-align:center">
+            <div id="mini-gauge-wrap"></div>
+            <div style="font-size:12px;color:var(--c-muted);margin-top:8px">Modifiez les facteurs de risque pour voir le score évoluer</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" onclick="switchTab(2)">Suivant : Facteurs obstétricaux →</button>
+      </div>
+    </div>
+
+    <div id="tabcontent-2" style="display:none">
+      <div class="grid grid-2" style="gap:20px">
+        <div class="card"><div class="card-header"><div class="card-title">Données de la grossesse actuelle</div></div><div class="card-body">
+          <div class="form-row form-row-2">
+            <div class="form-group"><label class="form-label">Âge gestationnel (SA) <span class="req">*</span></label><input class="form-input" id="f-sa" type="number" value="32" oninput="computeRisk()"></div>
+            <div class="form-group"><label class="form-label">Gestité <span class="req">*</span></label><input class="form-input" id="f-gestite" type="number" value="3" oninput="computeRisk()"></div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label class="form-label">Parité <span class="req">*</span></label><input class="form-input" id="f-parite" type="number" value="2" oninput="computeRisk()"></div>
+            <div class="form-group"><label class="form-label">Type de grossesse</label>
+              <select class="form-input form-select" id="f-grossesse" onchange="computeRisk()"><option selected>Unique</option><option>Gémellaire</option><option>Multiple (3+)</option></select>
+            </div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Antécédents obstétricaux</div></div><div class="card-body">
+          <div class="checkbox-group">
+            <label class="checkbox-item"><input type="checkbox" id="f-pe-ant" checked onchange="computeRisk()"> Prééclampsie antérieure</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-eclampsie" onchange="computeRisk()"> Éclampsie</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-hta-grav" checked onchange="computeRisk()"> Hypertension gravidique antérieure</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-rciu" onchange="computeRisk()"> RCIU (retard de croissance)</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-pe-fam" checked onchange="computeRisk()"> Prééclampsie (mère ou sœur)</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-hta-fam" onchange="computeRisk()"> HTA essentielle familiale</label>
+          </div>
+        </div></div>
+      </div>
+      <div style="margin-top:16px;display:flex;justify-content:space-between">
+        <button class="btn btn-secondary" onclick="switchTab(1)">← Retour</button>
+        <button class="btn btn-primary" onclick="switchTab(3)">Suivant : Facteurs maternels →</button>
+      </div>
+    </div>
+
+    <div id="tabcontent-3" style="display:none">
+      <div class="grid grid-2" style="gap:20px">
+        <div class="card"><div class="card-header"><div class="card-title">Paramètres cliniques actuels</div></div><div class="card-body">
+          <div id="alert-ta" class="alert alert-danger" style="margin-bottom:14px;display:none">
+            <div class="alert-icon">⚠️</div>
+            <div><div class="alert-title">Valeurs anormales détectées</div><div class="alert-body" id="alert-ta-body">TA systolique ≥160 mmHg : critère de gravité présent</div></div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label class="form-label">TA systolique (mmHg) <span class="req">*</span></label><input class="form-input" id="f-tas" value="165" oninput="checkVitals();computeRisk()"></div>
+            <div class="form-group"><label class="form-label">TA diastolique (mmHg) <span class="req">*</span></label><input class="form-input" id="f-tad" value="110" oninput="checkVitals();computeRisk()"></div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label class="form-label">Protéinurie (g/24h)</label><input class="form-input" id="f-proteinurie" value="3.2" oninput="computeRisk()"></div>
+            <div class="form-group"><label class="form-label">Bandelette protéinurie</label>
+              <select class="form-input form-select" id="f-bu" onchange="computeRisk()"><option>Négative</option><option>1+</option><option>2+</option><option selected>3+</option><option>4+</option></select>
+            </div>
+          </div>
+          <div class="form-row form-row-2">
+            <div class="form-group"><label class="form-label">PlGF (pg/mL)</label><input class="form-input" id="f-plgf" value="38" oninput="computeRisk()"></div>
+            <div class="form-group"><label class="form-label">sFlt-1 (pg/mL)</label><input class="form-input" id="f-sflt" value="2840" oninput="computeRisk()"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Ratio sFlt-1/PlGF</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input class="form-input" id="f-ratio" readonly style="background:#f9fafb">
+              <span class="badge" id="f-ratio-badge">—</span>
+            </div>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Comorbidités</div></div><div class="card-body">
+          <div class="checkbox-group">
+            <label class="checkbox-item"><input type="checkbox" id="f-hta" checked onchange="computeRisk()"> Hypertension artérielle chronique</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-dg" checked onchange="computeRisk()"> Diabète gestationnel</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-dt1" onchange="computeRisk()"> Diabète de type 1</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-dt2" onchange="computeRisk()"> Diabète de type 2</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-lupus" onchange="computeRisk()"> Lupus érythémateux</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-sap" onchange="computeRisk()"> Syndrome des antiphospholipides</label>
+            <label class="checkbox-item"><input type="checkbox" id="f-ckd" onchange="computeRisk()"> Maladie rénale chronique</label>
+          </div>
+        </div></div>
+      </div>
+      <div style="margin-top:16px;display:flex;justify-content:space-between">
+        <button class="btn btn-secondary" onclick="switchTab(2)">← Retour</button>
+        <button class="btn btn-primary" onclick="switchTab(4)">Suivant : Environnement & Social →</button>
+      </div>
+    </div>
+
+    <div id="tabcontent-4" style="display:none">
+      <div class="grid grid-2" style="gap:20px">
+        <div class="card"><div class="card-header"><div class="card-title">Facteurs environnementaux</div></div><div class="card-body">
+          <div class="form-group"><label class="form-label">Zone géographique</label>
+            <select class="form-input form-select" id="f-zone" onchange="computeRisk()"><option selected>Urbaine</option><option>Périurbaine</option><option>Rurale</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Exposition pollution atmosphérique</label>
+            <select class="form-input form-select" id="f-pollution" onchange="computeRisk()"><option selected>Élevée (centre-ville)</option><option>Modérée</option><option>Faible</option></select>
+          </div>
+        </div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Facteurs socio-économiques</div></div><div class="card-body">
+          <div class="form-group"><label class="form-label">Niveau de revenu du ménage</label>
+            <select class="form-input form-select" id="f-revenu" onchange="computeRisk()"><option selected>Faible (&lt;30 000 DA/mois)</option><option>Moyen (30–60 000 DA)</option><option>Élevé (&gt;60 000 DA)</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Score de stress perçu (0-10)</label>
+            <div style="display:flex;align-items:center;gap:12px">
+              <input type="range" min="0" max="10" value="7" id="f-stress" style="flex:1" oninput="document.getElementById('stress-val').textContent=this.value;computeRisk()">
+              <span id="stress-val" style="font-weight:700;color:var(--c-warning);min-width:20px">7</span>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Tabagisme</label>
+            <select class="form-input form-select" id="f-tabac" onchange="computeRisk()"><option selected>Non-fumeuse</option><option>Ex-fumeuse</option><option>Fumeuse active</option><option>Tabagisme passif</option></select>
+          </div>
+        </div></div>
+      </div>
+      <div style="margin-top:16px;display:flex;justify-content:space-between">
+        <button class="btn btn-secondary" onclick="switchTab(3)">← Retour</button>
+        <button class="btn btn-primary" onclick="showScreen('monitoring')">Enregistrer et lancer l'analyse IA →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MONITORING -->
+<div class="screen" id="screen-monitoring">
+  <div class="patient-header">
+    <div class="patient-avatar-lg" id="mon-avatar">FB</div>
+    <div class="patient-info">
+      <div class="patient-name" id="mon-name">Fatima Benali</div>
+      <div class="patient-meta" id="mon-meta">G3P2 · 34 ans · CHU-CON-2024-08472 · SA : 32 semaines · DPA : 15 juin 2026</div>
+      <div class="patient-tags">
+        <span class="badge badge-danger" id="mon-score-badge">Risque très élevé · 91%</span>
+        <span class="badge badge-warning" id="mon-hta-badge">HTA chronique</span>
+        <span class="badge badge-warning" id="mon-pe-badge">Prééclampsie antérieure</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('dashboard')">← Retour</button>
+      <button class="btn btn-danger btn-sm" onclick="showScreen('prediction')">Lancer analyse IA</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="grid grid-4" style="margin-bottom:20px">
+      <div class="stat-card" id="mon-tas-card" style="border-top:3px solid var(--c-danger)">
+        <div class="stat-label">TA systolique</div>
+        <div class="stat-value" id="mon-tas" style="color:var(--c-danger)">165</div>
+        <div style="font-size:11px;color:var(--c-muted);margin-top:4px" id="mon-tas-note">mmHg · Critique ≥160</div>
+      </div>
+      <div class="stat-card" id="mon-tad-card" style="border-top:3px solid var(--c-danger)">
+        <div class="stat-label">TA diastolique</div>
+        <div class="stat-value" id="mon-tad" style="color:var(--c-danger)">110</div>
+        <div style="font-size:11px;color:var(--c-muted);margin-top:4px">mmHg · Critique ≥110</div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--c-danger)">
+        <div class="stat-label">Protéinurie</div>
+        <div class="stat-value" id="mon-prot" style="color:var(--c-danger)">3.2</div>
+        <div style="font-size:11px;color:var(--c-muted);margin-top:4px">g/24h · Sévère ≥3.0</div>
+      </div>
+      <div class="stat-card" style="border-top:3px solid var(--c-accent)">
+        <div class="stat-label">Score IA SAFIR DZ</div>
+        <div class="stat-value" id="mon-score" style="color:var(--c-danger)">91%</div>
+        <div style="font-size:11px;color:var(--c-muted);margin-top:4px" id="mon-score-note">Prééclampsie sévère</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header"><div class="card-title">Biomarqueurs sérologiques</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12.5px;font-weight:500">Ratio sFlt-1/PlGF</span><span style="font-weight:700;color:var(--c-danger)" id="mon-ratio-val">74.7 <span style="font-size:11px;font-weight:400;color:var(--c-muted)">(Normal &lt;38)</span></span></div>
+            <div class="progress-bar"><div class="progress-fill" id="mon-ratio-bar" style="width:98%;background:var(--c-danger)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:12.5px;font-weight:500">Protéinurie 24h</span><span style="font-weight:700;color:var(--c-danger)" id="mon-prot-bar-val">3.2 g/24h <span style="font-size:11px;font-weight:400;color:var(--c-muted)">(Normal &lt;0.3)</span></span></div>
+            <div class="progress-bar"><div class="progress-fill" id="mon-prot-bar" style="width:90%;background:var(--c-danger)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREDICTION -->
+<div class="screen" id="screen-prediction">
+  <div class="patient-header">
+    <div class="patient-avatar-lg" id="pred-avatar">FB</div>
+    <div class="patient-info">
+      <div class="patient-name" id="pred-name">Analyse IA — Fatima Benali</div>
+      <div class="patient-meta">Prédiction multimodale du risque de prééclampsie · <span class="live-dot"></span> Mise à jour en temps réel</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('monitoring')">← Dossier</button>
+      <button class="btn btn-accent btn-sm" onclick="showScreen('explanation')">Voir l'explication IA →</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="grid grid-2" style="gap:20px;margin-bottom:20px">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Score de risque global SAFIR DZ</div>
+          <span class="badge badge-info" id="pred-confidence">Confiance : 94.2%</span>
+        </div>
+        <div class="card-body">
+          <!-- FIXED GAUGE -->
+          <div style="text-align:center">
+            <svg id="main-gauge" viewBox="0 0 200 130" width="240" style="display:block;margin:0 auto">
+              <defs>
+                <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#10b981"/>
+                  <stop offset="40%" stop-color="#f59e0b"/>
+                  <stop offset="70%" stop-color="#ef4444"/>
+                  <stop offset="100%" stop-color="#7c3aed"/>
+                </linearGradient>
+              </defs>
+              <!-- Background arc: half-circle from 180° to 0° -->
+              <path id="gauge-bg" d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="#e5e7eb" stroke-width="14" stroke-linecap="round"/>
+              <!-- Filled arc (dynamic) -->
+              <path id="gauge-fill" d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 251"/>
+              <!-- Needle — rotates around center (100,110) -->
+              <g id="gauge-needle-g" style="transform-origin:100px 110px;transform:rotate(-90deg)">
+                <line x1="100" y1="110" x2="100" y2="38" stroke="#1f2937" stroke-width="2.5" stroke-linecap="round"/>
+              </g>
+              <circle cx="100" cy="110" r="6" fill="#1f2937"/>
+              <!-- Labels -->
+              <text x="14" y="126" font-size="9" fill="#9ca3af">0%</text>
+              <text x="186" y="126" text-anchor="end" font-size="9" fill="#9ca3af">100%</text>
+              <text id="gauge-pct-text" x="100" y="93" text-anchor="middle" font-size="28" font-weight="700" fill="#b91c1c">91%</text>
+              <text x="100" y="112" text-anchor="middle" font-size="10" fill="#9ca3af">Score SAFIR DZ</text>
+            </svg>
+            <div class="risk-level-badge" id="pred-risk-badge" style="background:var(--c-danger-light);color:var(--c-danger)">Risque TRÈS ÉLEVÉ — Prééclampsie sévère probable</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:20px">
+            <div style="flex:1;text-align:center;padding:10px;background:#f9fafb;border-radius:var(--radius-sm)">
+              <div style="font-size:10px;color:var(--c-muted);text-transform:uppercase;letter-spacing:.05em">Sensibilité</div>
+              <div style="font-size:18px;font-weight:700;color:var(--c-primary)" id="pred-sens">94.2%</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px;background:#f9fafb;border-radius:var(--radius-sm)">
+              <div style="font-size:10px;color:var(--c-muted);text-transform:uppercase;letter-spacing:.05em">Spécificité</div>
+              <div style="font-size:18px;font-weight:700;color:var(--c-primary)">91.8%</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:10px;background:#f9fafb;border-radius:var(--radius-sm)">
+              <div style="font-size:10px;color:var(--c-muted);text-transform:uppercase;letter-spacing:.05em">AUC-ROC</div>
+              <div style="font-size:18px;font-weight:700;color:var(--c-primary)">0.968</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Votes des modèles individuels</div></div>
+        <div class="card-body" id="models-panel">
+          <!-- rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Facteurs de risque — Contribution par catégorie</div>
+        <button class="btn btn-secondary btn-sm" onclick="showScreen('explanation')">Explication détaillée SHAP →</button>
+      </div>
+      <div class="card-body">
+        <div class="grid grid-4" id="cat-grid"><!-- rendered by JS --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPLANATION -->
+<div class="screen" id="screen-explanation">
+  <div class="patient-header">
+    <div class="patient-avatar-lg">FB</div>
+    <div class="patient-info">
+      <div class="patient-name">Explication IA — SHAP Analysis</div>
+      <div class="patient-meta" id="expl-meta">Fatima Benali · Pourquoi l'IA prédit un risque élevé ? · Méthode : SHAP + LIME</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('prediction')">← Prédiction</button>
+      <button class="btn btn-primary btn-sm" onclick="showScreen('recommendations')">Recommandations →</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="alert alert-info" style="margin-bottom:20px">
+      <div class="alert-icon">🤖</div>
+      <div>
+        <div class="alert-title">À propos de l'explication IA</div>
+        <div class="alert-body">Les valeurs SHAP indiquent la contribution de chaque facteur au score de risque final. Les barres <span style="color:var(--c-danger);font-weight:600">rouges</span> augmentent le risque, les barres <span style="color:#2563eb;font-weight:600">bleues</span> le diminuent. Score de base (prévalence population) : <strong>8%</strong> → Score actuel : <strong id="expl-score-ref" style="color:var(--c-danger)">91%</strong></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Diagramme SHAP — Contributions des facteurs</div></div>
+      <div class="card-body">
+        <div style="font-size:11px;display:flex;gap:16px;margin-bottom:14px;color:var(--c-muted)">
+          <span><span style="display:inline-block;width:12px;height:8px;background:var(--c-danger);border-radius:2px;margin-right:4px"></span>Augmente le risque</span>
+          <span><span style="display:inline-block;width:12px;height:8px;background:#2563eb;border-radius:2px;margin-right:4px"></span>Diminue le risque</span>
+        </div>
+        <div id="shap-chart"><!-- rendered by JS --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECOMMENDATIONS -->
+<div class="screen" id="screen-recommendations">
+  <div class="patient-header">
+    <div class="patient-avatar-lg">FB</div>
+    <div class="patient-info">
+      <div class="patient-name">Recommandations cliniques — IA + Guide CNGOF/WHO</div>
+      <div class="patient-meta" id="rec-meta">Fatima Benali · Protocole Prééclampsie Sévère</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary btn-sm" onclick="showScreen('explanation')">← Explication IA</button>
+      <button class="btn btn-primary btn-sm">🖨 Imprimer le protocole</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="alert" id="rec-alert-box" style="border-left-color:var(--c-danger);background:var(--c-danger-pale)">
+      <div class="alert-icon" id="rec-alert-icon">🚨</div>
+      <div>
+        <div class="alert-title" id="rec-alert-title">ACTION IMMÉDIATE REQUISE — Prééclampsie sévère</div>
+        <div class="alert-body" id="rec-alert-body">Score IA 91% · TA ≥160/110 mmHg · Protéinurie ≥3 g/24h · Hospitalisation obligatoire</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header"><div class="card-title">Protocole de prise en charge</div><span class="badge badge-danger" id="rec-priority-badge">Priorité CRITIQUE</span></div>
+      <div class="card-body" id="rec-steps"><!-- rendered by JS --></div>
+    </div>
+  </div>
+</div>
+
+<!-- POPULATION -->
+<div class="screen" id="screen-population">
+  <div class="topbar">
+    <div><div class="topbar-title">Statistiques populationnelles — Algérie</div><div class="topbar-sub">Tableau de bord épidémiologique · Santé maternelle nationale · 2023–2026</div></div>
+  </div>
+  <div class="content">
+    <div class="grid grid-4" style="margin-bottom:22px">
+      <div class="stat-card"><div class="stat-label">Prévalence nationale</div><div class="stat-value">5.8%</div><div class="stat-delta up">↑ vs OMS 3–5%</div></div>
+      <div class="stat-card"><div class="stat-label">Mortalité maternelle/100 000</div><div class="stat-value" style="color:var(--c-danger)">112</div><div class="stat-delta up">Objectif ODD: &lt;70</div></div>
+      <div class="stat-card"><div class="stat-label">Cas analysés SAFIR DZ (2025)</div><div class="stat-value" style="color:var(--c-accent)">14 820</div><div class="stat-delta down">Délai diagnostic –4.2j</div></div>
+      <div class="stat-card"><div class="stat-label">Précision SAFIR DZ</div><div class="stat-value" style="color:var(--c-success)">94.2%</div><div class="stat-delta down">Faux positifs : 5.8%</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Incidence par wilaya (Top 10)</div></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="shap-row"><span class="shap-label" style="width:130px">Constantine</span><div class="shap-bar-wrap"><div class="shap-bar shap-pos" style="width:85%"></div></div><span class="shap-value">7.2%</span></div>
+          <div class="shap-row"><span class="shap-label" style="width:130px">Alger</span><div class="shap-bar-wrap"><div class="shap-bar shap-pos" style="width:78%"></div></div><span class="shap-value">6.6%</span></div>
+          <div class="shap-row"><span class="shap-label" style="width:130px">Sétif</span><div class="shap-bar-wrap"><div class="shap-bar shap-pos" style="width:72%"></div></div><span class="shap-value">6.1%</span></div>
+          <div class="shap-row"><span class="shap-label" style="width:130px">Oran</span><div class="shap-bar-wrap"><div class="shap-bar shap-pos" style="width:68%"></div></div><span class="shap-value">5.8%</span></div>
+          <div class="shap-row"><span class="shap-label" style="width:130px">Annaba</span><div class="shap-bar-wrap"><div class="shap-bar shap-pos" style="width:62%"></div></div><span class="shap-value">5.2%</span></div>
+          <div class="shap-row"><span class="shap-label" style="width:130px">Batna</span><div class="shap-bar-wrap"><div class="shap-bar shap-pos" style="width:55%"></div></div><span class="shap-value">4.7%</span></div>
+          <div class="shap-row"><span class="shap-label" style="width:130px">Tizi-Ouzou</span><div class="shap-bar-wrap"><div class="shap-bar shap-pos" style="width:45%"></div></div><span class="shap-value">3.8%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+// ════════════════════════════════════════════
+//  GLOBAL STATE — single source of truth
+// ════════════════════════════════════════════
+const state = {
+  score: 91,
+  nom: 'Benali',
+  prenom: 'Fatima',
+  sa: 32,
+  tas: 165,
+  tad: 110,
+  proteinurie: 3.2,
+  plgf: 38,
+  sflt: 2840,
+  ratio: 74.7,
+  bmi: 29.0,
+  stress: 7,
+  // flags
+  pe_ant: true, eclampsie: false, hta_grav: true, rciu: false, pe_fam: true, hta_fam: false,
+  hta: true, dg: true, dt1: false, dt2: false, lupus: false, sap: false, ckd: false,
+  grossesse: 'Unique',
+  zone: 'Urbaine', pollution: 'Élevée (centre-ville)', revenu: 'Faible', tabac: 'Non-fumeuse'
+};
+
+// ════════════════════════════════════════════
+//  RISK COMPUTATION ENGINE
+// ════════════════════════════════════════════
+function computeRisk() {
+  readFormToState();
+
+  let score = 8; // base prevalence
+
+  // Obstetric factors
+  if (state.pe_ant)    score += 22;
+  if (state.eclampsie) score += 18;
+  if (state.hta_grav)  score += 10;
+  if (state.rciu)      score += 8;
+  if (state.pe_fam)    score += 6;
+  if (state.hta_fam)   score += 4;
+  if (state.grossesse === 'Gémellaire')    score += 5;
+  if (state.grossesse === 'Multiple (3+)') score += 10;
+  const sa = parseInt(state.sa) || 32;
+  if (sa < 28) score += 8; else if (sa < 34) score += 4;
+
+  // Blood pressure
+  const tas = parseFloat(state.tas) || 0;
+  const tad = parseFloat(state.tad) || 0;
+  if (tas >= 160) score += 12;
+  else if (tas >= 140) score += 6;
+  if (tad >= 110) score += 8;
+  else if (tad >= 90) score += 4;
+
+  // Proteinuria
+  const prot = parseFloat(state.proteinurie) || 0;
+  if (prot >= 3)     score += 10;
+  else if (prot >= 1) score += 5;
+
+  // Biomarkers
+  const ratio = state.ratio;
+  if (ratio > 85)      score += 12;
+  else if (ratio > 38) score += 8;
+  else if (ratio > 10) score += 2;
+
+  // BMI
+  const bmi = parseFloat(state.bmi) || 22;
+  if (bmi >= 35)      score += 6;
+  else if (bmi >= 30) score += 4;
+  else if (bmi >= 25) score += 2;
+
+  // Comorbidities
+  if (state.hta)  score += 8;
+  if (state.dg)   score += 6;
+  if (state.dt1)  score += 8;
+  if (state.dt2)  score += 7;
+  if (state.lupus) score += 10;
+  if (state.sap)  score += 12;
+  if (state.ckd)  score += 9;
+
+  // Social/Env
+  if (state.stress >= 8)       score += 4;
+  else if (state.stress >= 5)  score += 2;
+  if (state.revenu === 'Faible (&lt;30 000 DA/mois)' || state.revenu.includes('Faible')) score += 3;
+  if (state.tabac === 'Fumeuse active') score += 4;
+  if (state.pollution.includes('Élevée')) score += 2;
+
+  state.score = Math.min(99, Math.max(2, Math.round(score)));
+  updateAllViews();
+}
+
+function readFormToState() {
+  const g = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const gb = id => { const el = document.getElementById(id); return el ? el.checked : false; };
+
+  state.nom    = g('f-nom') || state.nom;
+  state.prenom = g('f-prenom') || state.prenom;
+  state.sa     = g('f-sa') || state.sa;
+  state.tas    = g('f-tas') || state.tas;
+  state.tad    = g('f-tad') || state.tad;
+  state.proteinurie = g('f-proteinurie') || state.proteinurie;
+  state.plgf   = parseFloat(g('f-plgf')) || state.plgf;
+  state.sflt   = parseFloat(g('f-sflt')) || state.sflt;
+  state.stress = parseInt(g('f-stress')) || state.stress;
+  state.revenu = g('f-revenu') || state.revenu;
+  state.tabac  = g('f-tabac') || state.tabac;
+  state.zone   = g('f-zone') || state.zone;
+  state.pollution = g('f-pollution') || state.pollution;
+  state.grossesse = g('f-grossesse') || state.grossesse;
+
+  const poids = parseFloat(g('f-poids')) || 78;
+  const taille = parseFloat(g('f-taille')) || 164;
+  state.bmi = (poids / ((taille/100)**2)).toFixed(1);
+
+  state.pe_ant  = gb('f-pe-ant');
+  state.eclampsie = gb('f-eclampsie');
+  state.hta_grav = gb('f-hta-grav');
+  state.rciu    = gb('f-rciu');
+  state.pe_fam  = gb('f-pe-fam');
+  state.hta_fam = gb('f-hta-fam');
+  state.hta     = gb('f-hta');
+  state.dg      = gb('f-dg');
+  state.dt1     = gb('f-dt1');
+  state.dt2     = gb('f-dt2');
+  state.lupus   = gb('f-lupus');
+  state.sap     = gb('f-sap');
+  state.ckd     = gb('f-ckd');
+
+  // Compute ratio
+  if (state.plgf > 0) {
+    state.ratio = (state.sflt / state.plgf).toFixed(1);
+  }
+}
+
+function id(x) { return document.getElementById(x); }
+
+// ════════════════════════════════════════════
+//  UPDATE ALL VIEWS
+// ════════════════════════════════════════════
+function updateAllViews() {
+  const s = state.score;
+  const name = state.prenom + ' ' + state.nom;
+  const initials = (state.prenom[0]||'F') + (state.nom[0]||'B');
+
+  // ── Risk classification ──
+  let riskLabel, riskColor, riskBg, riskClass, alertIcon;
+  if (s >= 80) {
+    riskLabel = 'Risque TRÈS ÉLEVÉ — Prééclampsie sévère probable';
+    riskColor = '#b91c1c'; riskBg = '#fee2e2'; riskClass = 'Critique'; alertIcon = '🚨';
+  } else if (s >= 60) {
+    riskLabel = 'Risque ÉLEVÉ — Surveillance rapprochée requise';
+    riskColor = '#dc2626'; riskBg = '#fee2e2'; riskClass = 'Élevé'; alertIcon = '⚠️';
+  } else if (s >= 30) {
+    riskLabel = 'Risque MODÉRÉ — Suivi renforcé recommandé';
+    riskColor = '#b45309'; riskBg = '#fef3c7'; riskClass = 'Modéré'; alertIcon = '⚠️';
+  } else {
+    riskLabel = 'Risque FAIBLE — Suivi standard';
+    riskColor = '#065f46'; riskBg = '#d1fae5'; riskClass = 'Faible'; alertIcon = 'ℹ️';
+  }
+
+  // ── Gauge (fixed math) ──
+  updateGauge('main-gauge', s, riskColor);
+  updateGauge('mini-gauge-svg', s, riskColor);
+
+  setText('gauge-pct-text', s + '%');
+  setStyle('gauge-pct-text', 'fill', riskColor);
+
+  // ── Prediction screen ──
+  setHtml('pred-name', 'Analyse IA — ' + name);
+  setHtml('pred-avatar', initials);
+  setHtml('pred-risk-badge', riskLabel);
+  setStyle('pred-risk-badge', 'background', riskBg);
+  setStyle('pred-risk-badge', 'color', riskColor);
+  renderModels(s);
+  renderCategoryGrid(s);
+
+  // ── Dashboard ──
+  setHtml('dash-ai-score', s + '%');
+  setHtml('dash-risk-label', riskLabel.split('—')[0].trim());
+  setHtml('dash-score-cell', s + '%');
+  setStyle('dash-score-cell', 'color', riskColor);
+  const bar = id('dash-score-bar');
+  if (bar) { bar.style.width = s + '%'; bar.style.background = riskColor; }
+  const sBadge = id('dash-status-badge');
+  if (sBadge) { sBadge.textContent = riskClass; sBadge.className = 'badge ' + (s >= 60 ? 'badge-danger' : s >= 30 ? 'badge-warning' : 'badge-success'); }
+  setHtml('dash-sa', (state.sa || 32) + ' SA');
+  setHtml('dash-alert-body', name + ' (SA ' + (state.sa||32) + ') — Score IA ' + s + '% — ' + riskLabel.split('—')[1]?.trim());
+
+  // ── Monitoring ──
+  setHtml('mon-avatar', initials);
+  setHtml('mon-name', name);
+  setHtml('mon-meta', 'G3P2 · ' + (state.sa||32) + ' SA');
+  setHtml('mon-score-badge', riskClass + ' · ' + s + '%');
+  setHtml('mon-tas', state.tas || 165);
+  setHtml('mon-tad', state.tad || 110);
+  setHtml('mon-prot', state.proteinurie || 3.2);
+  setHtml('mon-score', s + '%');
+  setStyle('mon-score', 'color', riskColor);
+  setHtml('mon-score-note', riskClass === 'Critique' ? 'Prééclampsie sévère' : riskClass + ' risque');
+  setHtml('mon-ratio-val', state.ratio + ' <span style="font-size:11px;font-weight:400;color:var(--c-muted)">(Normal &lt;38)</span>');
+  const ratioPct = Math.min(100, Math.round((state.ratio / 200) * 100));
+  const ratioColor = state.ratio > 38 ? 'var(--c-danger)' : '#10b981';
+  const ratioBar = id('mon-ratio-bar');
+  if (ratioBar) { ratioBar.style.width = ratioPct + '%'; ratioBar.style.background = ratioColor; }
+
+  // ── BMI display ──
+  setBMIDisplay();
+
+  // ── Ratio display in form ──
+  const ratioEl = id('f-ratio');
+  const ratioBadge = id('f-ratio-badge');
+  if (ratioEl) ratioEl.value = state.ratio;
+  if (ratioBadge) {
+    if (state.ratio > 38) {
+      ratioBadge.textContent = 'Positif (>38)';
+      ratioBadge.className = 'badge badge-danger';
+    } else {
+      ratioBadge.textContent = 'Négatif (≤38)';
+      ratioBadge.className = 'badge badge-success';
+    }
+  }
+
+  // ── Explanation screen ──
+  setHtml('expl-score-ref', s + '%');
+  setStyle('expl-score-ref', 'color', riskColor);
+  renderSHAP(s);
+
+  // ── Recommendations ──
+  setHtml('rec-alert-icon', alertIcon);
+  setHtml('rec-alert-title', s >= 80 ? 'ACTION IMMÉDIATE REQUISE — Prééclampsie sévère' :
+    s >= 60 ? 'SURVEILLANCE URGENTE — Risque élevé confirmé' :
+    s >= 30 ? 'SURVEILLANCE RENFORCÉE — Risque modéré' : 'SUIVI STANDARD — Risque faible');
+  setHtml('rec-alert-body', 'Score IA ' + s + '% · TA ' + (state.tas||165) + '/' + (state.tad||110) + ' mmHg · Protéinurie ' + (state.proteinurie||3.2) + ' g/24h');
+  const recBox = id('rec-alert-box');
+  if (recBox) {
+    recBox.style.borderLeftColor = riskColor;
+    recBox.style.background = riskBg;
+  }
+  const recBadge = id('rec-priority-badge');
+  if (recBadge) {
+    recBadge.textContent = 'Priorité ' + riskClass.toUpperCase();
+    recBadge.className = 'badge ' + (s >= 60 ? 'badge-danger' : s >= 30 ? 'badge-warning' : 'badge-success');
+  }
+  renderRecommendations(s);
+
+  // ── Mini gauge in registration ──
+  renderMiniGauge(s, riskColor, riskLabel);
+
+  // HTA badges on monitoring
+  const htaBadge = id('mon-hta-badge');
+  if (htaBadge) htaBadge.style.display = state.hta ? '' : 'none';
+  const peBadge = id('mon-pe-badge');
+  if (peBadge) peBadge.style.display = state.pe_ant ? '' : 'none';
+}
+
+// ════════════════════════════════════════════
+//  FIXED GAUGE RENDERER
+//  The arc goes from 180° (left, 0%) to 0° (right, 100%)
+//  The needle points from centre (100,110) at angle = 180° - pct*180°
+// ════════════════════════════════════════════
+function updateGauge(gaugeId, pct, color) {
+  const fill  = document.getElementById('gauge-fill');
+  const needle = document.getElementById('gauge-needle-g');
+  const txt   = document.getElementById('gauge-pct-text');
+
+  if (!fill || !needle) return;
+
+  // Arc total length (half-circle r=80): π*r ≈ 251.3
+  const totalLen = Math.PI * 80;
+  const filledLen = (pct / 100) * totalLen;
+  fill.setAttribute('stroke-dasharray', filledLen + ' ' + totalLen);
+  fill.setAttribute('stroke', color);
+
+  // Needle: at 0% → rotate(-90deg) [points left], at 100% → rotate(90deg) [points right]
+  // rotation = -90 + (pct/100)*180
+  const deg = -90 + (pct / 100) * 180;
+  needle.style.transform = `rotate(${deg}deg)`;
+
+  if (txt) {
+    txt.textContent = pct + '%';
+    txt.setAttribute('fill', color);
+  }
+}
+
+// ════════════════════════════════════════════
+//  MINI GAUGE (registration preview)
+// ════════════════════════════════════════════
+function renderMiniGauge(s, color, label) {
+  const wrap = id('mini-gauge-wrap');
+  if (!wrap) return;
+  const totalLen = Math.PI * 50;
+  const filledLen = (s / 100) * totalLen;
+  const deg = -90 + (s / 100) * 180;
+  wrap.innerHTML = `
+    <svg viewBox="0 0 140 90" width="180" style="display:block;margin:0 auto">
+      <defs>
+        <linearGradient id="mgGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#10b981"/>
+          <stop offset="40%" stop-color="#f59e0b"/>
+          <stop offset="70%" stop-color="#ef4444"/>
+          <stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient>
+      </defs>
+      <path d="M 20 75 A 50 50 0 0 1 120 75" fill="none" stroke="#e5e7eb" stroke-width="10" stroke-linecap="round"/>
+      <path d="M 20 75 A 50 50 0 0 1 120 75" fill="none" stroke="url(#mgGrad)" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="${filledLen} ${totalLen}"/>
+      <g style="transform-origin:70px 75px;transform:rotate(${deg}deg)">
+        <line x1="70" y1="75" x2="70" y2="30" stroke="#1f2937" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <circle cx="70" cy="75" r="4" fill="#1f2937"/>
+      <text x="70" y="66" text-anchor="middle" font-size="20" font-weight="700" fill="${color}">${s}%</text>
+      <text x="10" y="88" font-size="7" fill="#9ca3af">0%</text>
+      <text x="130" y="88" text-anchor="end" font-size="7" fill="#9ca3af">100%</text>
+    </svg>
+    <div style="font-size:12px;font-weight:600;color:${color};margin-top:6px">${label.split('—')[0].trim()}</div>
+  `;
+}
+
+// ════════════════════════════════════════════
+//  MODEL PANEL
+// ════════════════════════════════════════════
+function renderModels(s) {
+  const panel = id('models-panel');
+  if (!panel) return;
+  const models = [
+    { name: 'XGBoost Classifier v2.4', weight: 35, delta: 3 },
+    { name: 'Random Forest (500 arbres)', weight: 30, delta: -2 },
+    { name: 'LSTM Neural Network', weight: 25, delta: 1 },
+    { name: 'Régression logistique (Baseline)', weight: 10, delta: -4 },
+  ];
+  const consensus = models.every(m => (s + m.delta) >= 50) ? 'ÉLEVÉ' : 'MODÉRÉ/MIXTE';
+  panel.innerHTML = models.map(m => {
+    const ms = Math.min(99, Math.max(1, s + m.delta));
+    const c = ms >= 70 ? 'var(--c-danger)' : ms >= 40 ? 'var(--c-warning)' : '#10b981';
+    return `<div class="model-card" style="margin-bottom:12px">
+      <div class="model-name">${m.name}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="model-score" style="color:${c}">${ms}%</div>
+        <div style="flex:1">
+          <div class="progress-bar"><div class="progress-fill" style="width:${ms}%;background:${c}"></div></div>
+          <div style="font-size:11px;color:var(--c-muted);margin-top:3px">Poids : ${m.weight}%</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + `<div style="margin-top:6px;padding:12px;background:var(--c-primary-pale);border-radius:var(--radius-sm);border-left:3px solid var(--c-accent)">
+    <div style="font-size:12px;font-weight:600;color:var(--c-primary);margin-bottom:2px">Consensus de l'ensemble</div>
+    <div style="font-size:12px;color:var(--c-muted)">Score pondéré : <strong>${s}%</strong> · Risque ${consensus} · 4 modèles consultés</div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════
+//  CATEGORY GRID (donut)
+// ════════════════════════════════════════════
+function renderCategoryGrid(s) {
+  const grid = id('cat-grid');
+  if (!grid) return;
+  const obsScore = Math.min(99, Math.round(s * 0.98 + (state.pe_ant ? 5 : 0)));
+  const matScore = Math.min(99, Math.round(s * 0.93 + (state.hta ? 3 : 0)));
+  const envScore = Math.min(99, Math.round(s * 0.62));
+  const socScore = Math.min(99, Math.round(s * 0.74));
+
+  const cats = [
+    { label: 'Obstétricaux', pct: obsScore, sub: 'SA ' + (state.sa||32) + ' · Antécédents PE' },
+    { label: 'Maternels', pct: matScore, sub: 'HTA · IMC · sFlt-1' },
+    { label: 'Environnement', pct: envScore, sub: state.zone + ' · Pollution' },
+    { label: 'Socio-économique', pct: socScore, sub: 'Revenu · Stress ' + (state.stress||7) + '/10' },
+  ];
+  grid.innerHTML = cats.map(c => {
+    const color = c.pct >= 70 ? '#b91c1c' : c.pct >= 40 ? '#b45309' : '#065f46';
+    const totalLen = 2 * Math.PI * 35;
+    const fill = (c.pct / 100) * totalLen;
+    return `<div style="text-align:center">
+      <svg viewBox="0 0 100 100" width="90" style="display:block;margin:0 auto">
+        <circle cx="50" cy="50" r="35" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+        <circle cx="50" cy="50" r="35" fill="none" stroke="${color}" stroke-width="8"
+          stroke-dasharray="${fill} ${totalLen}" stroke-dashoffset="${totalLen*0.25}" stroke-linecap="round"/>
+        <text x="50" y="47" text-anchor="middle" font-size="16" font-weight="700" fill="${color}">${c.pct}%</text>
+        <text x="50" y="62" text-anchor="middle" font-size="8" fill="#9ca3af">${c.label.substring(0,7)}</text>
+      </svg>
+      <div style="font-size:12px;font-weight:600;color:var(--c-neutral);margin-top:6px">${c.label}</div>
+      <div style="font-size:11px;color:var(--c-muted)">${c.sub}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  SHAP CHART
+// ════════════════════════════════════════════
+function getSHAPData(s) {
+  const data = [
+    { label: 'Prééclampsie antérieure', value: state.pe_ant ? 0.22 + s*0.002 : 0.01, type: 'pos' },
+    { label: 'Ratio sFlt-1/PlGF', value: state.ratio > 38 ? 0.18 + Math.log(state.ratio/38)*0.05 : 0.02, type: state.ratio > 38 ? 'pos' : 'neg' },
+    { label: 'HTA chronique', value: state.hta ? 0.15 : 0.01, type: state.hta ? 'pos' : 'neg' },
+    { label: 'TA ' + (state.tas||165) + '/' + (state.tad||110) + ' mmHg', value: (state.tas||0) >= 160 ? 0.14 : (state.tas||0) >= 140 ? 0.07 : 0.01, type: (state.tas||0) >= 140 ? 'pos' : 'neg' },
+    { label: 'Diabète gestationnel', value: state.dg ? 0.11 : 0.01, type: state.dg ? 'pos' : 'neg' },
+    { label: 'IMC ' + state.bmi + ' kg/m²', value: state.bmi >= 30 ? 0.09 : state.bmi >= 25 ? 0.05 : 0.01, type: state.bmi >= 25 ? 'pos' : 'neg' },
+    { label: 'Protéinurie ' + (state.proteinurie||0) + ' g/24h', value: (state.proteinurie||0) >= 3 ? 0.10 : 0.02, type: (state.proteinurie||0) >= 1 ? 'pos' : 'neg' },
+    { label: 'Stress ' + (state.stress||7) + '/10', value: 0.04 + (state.stress||0)*0.005, type: 'pos' },
+    { label: 'Lupus / SAP', value: (state.lupus || state.sap) ? 0.13 : 0.00, type: (state.lupus||state.sap) ? 'pos' : 'neg' },
+    { label: 'Grossesse unique', value: state.grossesse === 'Unique' ? 0.06 : 0, type: 'neg' },
+    { label: 'Âge ' + (id('f-age') ? id('f-age').value : '34 ans'), value: 0.04, type: 'neg' },
+  ].filter(d => d.value > 0).sort((a,b) => b.value - a.value);
+  return data;
+}
+
+function renderSHAP(s) {
+  const container = id('shap-chart');
+  if (!container) return;
+  const data = getSHAPData(s);
+  const maxVal = Math.max(...data.map(d => d.value));
+  container.innerHTML = data.map(d => {
+    const pct = Math.round((d.value / maxVal) * 100);
+    return `<div class="shap-row">
+      <span class="shap-label">${d.label}</span>
+      <div class="shap-bar-wrap">
+        <div class="shap-bar ${d.type === 'pos' ? 'shap-pos' : 'shap-neg'}" style="width:${pct}%"></div>
+      </div>
+      <span class="shap-value">${d.type === 'pos' ? '+' : '−'}${d.value.toFixed(2)}</span>
+    </div>`;
+  }).join('') + `<div style="margin-top:14px;padding:10px;background:#f9fafb;border-radius:6px;font-size:11.5px;color:var(--c-muted)">
+    Valeur de base (prévalence) : <strong>8%</strong> → Score final après corrections : <strong style="color:var(--c-danger)">${s}%</strong>
+  </div>`;
+}
+
+// ════════════════════════════════════════════
+//  RECOMMENDATIONS
+// ════════════════════════════════════════════
+function renderRecommendations(s) {
+  const el = id('rec-steps');
+  if (!el) return;
+  let steps = [];
+  if (s >= 70) {
+    steps = [
+      { p: 1, c: 'danger', title: 'Hospitalisation en urgence — Maternité niveau III', body: 'Admission immédiate en USIO. Monitoring continu TA, RCF, diurèse toutes les 15 min. Voie d\'abord veineuse × 2.', meta: 'Référence : HAS 2022 · WHO Severe PE Protocol' },
+      { p: 2, c: 'danger', title: 'Traitement antihypertenseur d\'urgence', body: 'Nicardipine IV : 2–4 mg/h. Objectif : TA systolique 140–160 mmHg. Surveillance ECG continue.', meta: 'Posologie adaptée au poids' },
+      { p: 3, c: 'danger', title: 'Prévention de l\'éclampsie — Sulfate de magnésium', body: 'Dose de charge : MgSO4 4g IV en 20 min. Entretien : 1g/h. Antidote gluconate de calcium au lit.', meta: 'Durée : 24h minimum' },
+      { p: 4, c: 'warning', title: 'Bilan biologique complet d\'urgence', body: 'NFS-plaquettes (toutes les 6h), bilan hépatique, LDH, créatinine, hémostase complète, Groupe-Rhésus.', meta: '' },
+      { p: 5, c: 'warning', title: 'Maturation pulmonaire fœtale', body: 'Bétaméthasone 12 mg IM × 2 doses (à 24h d\'intervalle) — Indiquée à SA ' + (state.sa||32) + '.', meta: 'Si accouchement prématuré imminent' },
+    ];
+  } else if (s >= 40) {
+    steps = [
+      { p: 1, c: 'warning', title: 'Consultation spécialisée urgente', body: 'Orientation en consultation d\'obstétrique sous 24–48h. Bilan hypertension et protéinurie.', meta: 'Surveillance ambulatoire renforcée' },
+      { p: 2, c: 'warning', title: 'Auto-surveillance tensionnelle', body: 'Mesure TA × 2/jour à domicile. Carnet de surveillance. Seuil d\'alerte : TA ≥ 140/90.', meta: '' },
+      { p: 3, c: 'warning', title: 'Bilan biologique de surveillance', body: 'NFS, bilan hépatique, créatinine, protéinurie des 24h. Consultation dans 1 semaine.', meta: '' },
+    ];
+  } else {
+    steps = [
+      { p: 1, c: 'success', title: 'Suivi standard de grossesse', body: 'Consultation mensuelle ou selon calendrier prénatal habituel. Aucune mesure urgente requise.', meta: '' },
+      { p: 2, c: 'success', title: 'Éducation et prévention', body: 'Information sur les signes d\'alerte (céphalées, œdèmes, troubles visuels). Hygiène de vie, activité adaptée.', meta: '' },
+    ];
+  }
+  const colors = { danger: { bg: 'var(--c-danger-light)', fg: 'var(--c-danger)' }, warning: { bg: 'var(--c-warning-light)', fg: 'var(--c-warning)' }, success: { bg: 'var(--c-success-light)', fg: 'var(--c-success)' } };
+  el.innerHTML = steps.map(st => {
+    const col = colors[st.c];
+    return `<div class="rec-item">
+      <div class="rec-priority" style="background:${col.bg};color:${col.fg}">${st.p}</div>
+      <div>
+        <div class="rec-content-title">${st.title}</div>
+        <div class="rec-content-body">${st.body}</div>
+        ${st.meta ? `<div class="rec-meta">${st.meta}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+//  HELPER UTILITIES
+// ════════════════════════════════════════════
+function setText(elId, val) { const el = id(elId); if (el) el.textContent = val; }
+function setHtml(elId, val) { const el = id(elId); if (el) el.innerHTML = val; }
+function setStyle(elId, prop, val) { const el = id(elId); if (el) el.style[prop] = val; }
+
+function calcAge() {
+  const dob = id('f-dob');
+  const ageEl = id('f-age');
+  if (!dob || !ageEl) return;
+  const today = new Date();
+  const birth = new Date(dob.value);
+  let age = today.getFullYear() - birth.getFullYear();
+  if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+  ageEl.value = isNaN(age) ? '' : age + ' ans';
+}
+
+function calcBMI() {
+  const poids = parseFloat(id('f-poids')?.value) || 0;
+  const taille = parseFloat(id('f-taille')?.value) || 0;
+  if (poids > 0 && taille > 0) {
+    state.bmi = (poids / ((taille/100)**2)).toFixed(1);
+    setBMIDisplay();
+  }
+}
+
+function setBMIDisplay() {
+  const bmiEl = id('f-bmi');
+  const bmiBadge = id('f-bmi-badge');
+  if (bmiEl) bmiEl.value = state.bmi + ' kg/m²';
+  if (bmiBadge) {
+    const bmi = parseFloat(state.bmi);
+    if (bmi >= 35)      { bmiBadge.textContent = 'Obésité II+'; bmiBadge.style.background = '#fee2e2'; bmiBadge.style.color = '#b91c1c'; }
+    else if (bmi >= 30) { bmiBadge.textContent = 'Obèse'; bmiBadge.style.background = '#fee2e2'; bmiBadge.style.color = '#b91c1c'; }
+    else if (bmi >= 25) { bmiBadge.textContent = 'Surpoids'; bmiBadge.style.background = 'var(--c-warning-light)'; bmiBadge.style.color = 'var(--c-warning)'; }
+    else                { bmiBadge.textContent = 'Normal'; bmiBadge.style.background = 'var(--c-success-light)'; bmiBadge.style.color = 'var(--c-success)'; }
+  }
+}
+
+function checkVitals() {
+  const tas = parseFloat(id('f-tas')?.value) || 0;
+  const tad = parseFloat(id('f-tad')?.value) || 0;
+  const alertBox = id('alert-ta');
+  const alertBody = id('alert-ta-body');
+  if (!alertBox) return;
+  const msgs = [];
+  if (tas >= 160) msgs.push('TA systolique ≥160 mmHg : critère de gravité');
+  if (tad >= 110) msgs.push('TA diastolique ≥110 mmHg : critère de gravité');
+  if (msgs.length > 0) {
+    alertBox.style.display = 'flex';
+    if (alertBody) alertBody.textContent = msgs.join(' · ');
+  } else {
+    alertBox.style.display = 'none';
+  }
+  // Color-code inputs
+  const tasSt = id('f-tas');
+  const tadSt = id('f-tad');
+  if (tasSt) { tasSt.style.borderColor = tas >= 160 ? 'var(--c-danger)' : tas >= 140 ? '#f59e0b' : 'var(--c-border)'; tasSt.style.background = tas >= 160 ? '#fff5f5' : ''; }
+  if (tadSt) { tadSt.style.borderColor = tad >= 110 ? 'var(--c-danger)' : tad >= 90 ? '#f59e0b' : 'var(--c-border)'; tadSt.style.background = tad >= 110 ? '#fff5f5' : ''; }
+}
+
+function updatePatientHeader() {
+  // updates are handled by computeRisk → updateAllViews
+  computeRisk();
+}
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('screen-' + screenId);
+  if (target) { target.classList.add('active'); target.classList.add('fade-in'); }
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const map = { login:0, dashboard:1, registration:2, monitoring:3, prediction:4, explanation:5, recommendations:6, population:7 };
+  const idx = map[screenId];
+  if (idx !== undefined) {
+    const items = document.querySelectorAll('.nav-item');
+    if (items[idx]) items[idx].classList.add('active');
+  }
+  // Re-render gauge after screen transition (needs to be visible)
+  setTimeout(() => updateAllViews(), 60);
+  window.scrollTo(0, 0);
+}
+
+function switchTab(n) {
+  for (let i = 1; i <= 4; i++) {
+    const tab = id('tab-' + i);
+    const tc  = id('tabcontent-' + i);
+    if (tab) tab.classList.toggle('active', i === n);
+    if (tc)  tc.style.display = i === n ? '' : 'none';
+  }
+}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+window.addEventListener('load', () => {
+  calcAge();
+  calcBMI();
+  checkVitals();
+  computeRisk();  // initial render
+  showScreen('login');
+});
+</script>
+</body>
+</html>
